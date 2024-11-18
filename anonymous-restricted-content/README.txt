@@ -1,9 +1,9 @@
 === Anonymous Restricted Content ===
 Contributors: cayenne
-Tags: restricted access, block content, content control, access control, restrict anonymous, hide content, limited access, permission, private
+Tags: restricted access, content control, access control, restrict anonymous, hide content
 Requires at least: 5.3
-Tested up to: 6.4
-Stable tag: 1.6.5
+Tested up to: 6.7
+Stable tag: 1.6.6
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -75,6 +75,9 @@ Unfortunately, we refused to support this feature in latest version, cause to ch
 
 
 == Changelog ==
+= 1.6.6 =
+* Sensitive Information Exposure vulnerability fixed
+
 = 1.6.5 =
 * Fixed bug with access to restricted content for authorized users via REST API
 

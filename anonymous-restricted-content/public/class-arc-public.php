@@ -231,7 +231,8 @@ class ARC_Public {
 					'compare' => '=',
 					'type'    => 'NUMERIC'
 				)
-			)
+			),
+			'find_restricted_posts' => true
 		);
 
 		$list = get_posts( $query_args );
@@ -254,7 +255,8 @@ class ARC_Public {
 					'value' => 1,
 					'type' => 'NUMBER'
 				)
-			)
+			),
+			'find_restricted_categories' => true
 		) );
 
 		return $list;
@@ -334,43 +336,74 @@ class ARC_Public {
 	 *
 	 * @since    1.3
 	 */
-	public function hide_restricted_in_main_query( $query )
+	public function hide_restricted_in_main_query( WP_Query $query )
 	{
-		if ( $query->is_main_query()
-					&& !$query->is_singular()
-					&& ! is_admin()
-				 	&& !is_user_logged_in() )
-		{
-			$arc_options    = get_option( 'arc_options' );
+		if ( ! is_admin() && ! is_user_logged_in() ) {
+			$arc_options = get_option( 'arc_options' );
 			$hidden_content = ! ( isset( $arc_options['arc-restricted-content'] ) && $arc_options['arc-restricted-content'] === 'css-blurred' );
-
-			if ( $hidden_content )
-			{
-				$meta_query = array(
-					'relation' => 'OR',
-					array(
-						'key'     => 'arc_restricted_post',
-						'value'   => 1,
-						'compare' => '!=',
-						'type'    => 'NUMERIC'
-					),
-					array(
-						'key'     => 'arc_restricted_post',
-						'compare' => 'NOT EXISTS',
-					)
-				);
-
-				$query->set( 'meta_query', $meta_query );
-			}
-
-			$restricted_category_ids = $this->get_restricted_category_ids();
-
-			if ( is_array($restricted_category_ids) && sizeof($restricted_category_ids) > 0 )
-			{
-				$query->set( 'category__not_in', $restricted_category_ids );
-				$query->set( 'tag__not_in', $restricted_category_ids );
+			
+			if ( $query->is_main_query() && ! $query->is_singular() ) {
+				if ( $hidden_content ) {
+					$this->apply_meta_query( $query );
+					$this->apply_restricted_categories( $query );
+				}
+			} elseif ( defined('REST_REQUEST') && REST_REQUEST && ! $query->is_main_query() && ! isset( $query->query['find_restricted_posts'] ) ) {
+				$this->apply_meta_query( $query );
+				$this->apply_restricted_categories( $query );
 			}
 		}
+	}
+	
+	/**
+	 * Apply the meta query to the main query.
+	 * @since    1.6.6
+	 */
+	private function apply_meta_query( $query ) {
+		$meta_query = array(
+			'relation' => 'OR',
+			array(
+				'key'     => 'arc_restricted_post',
+				'value'   => 1,
+				'compare' => '!=',
+				'type'    => 'NUMERIC'
+			),
+			array(
+				'key'     => 'arc_restricted_post',
+				'compare' => 'NOT EXISTS',
+			)
+		);
+	
+		$query->set( 'meta_query', $meta_query );
+	}
+	
+	/**
+	 * Apply restrict categories IDs to the main query.
+	 * @since    1.6.6
+	 */
+	private function apply_restricted_categories( $query ) {
+		$restricted_category_ids = $this->get_restricted_category_ids();
+	
+		if ( is_array($restricted_category_ids) && sizeof($restricted_category_ids) > 0 ) {
+			$query->set( 'category__not_in', $restricted_category_ids );
+			$query->set( 'tag__not_in', $restricted_category_ids );
+		}
+	}
+	
+	public function restricted_rest_api_content( $response, $handler, $request ) {
+		if ( ! is_admin() && ! is_user_logged_in() ) {
+			$post_id = $request['id'];
+			$restricted_ids = $this->get_restricted_ids();
+
+			if ( in_array( $post_id, $restricted_ids ) ) {
+				$response = new WP_Error(
+					'rest_forbidden',
+					__( 'Sorry, you are not allowed to do that.' ),
+					array( 'status' => rest_authorization_required_code() )
+				);
+			}
+		}
+		
+		return $response;
 	}
 
 	/**
@@ -468,29 +501,6 @@ class ARC_Public {
 		}
 
 		return $classes;
-	}
-
-	public function restricted_rest_api( $result )
-	{
-		if ( is_array( $result ) && ! is_user_logged_in() ) {
-			if ( isset( $result['id'], $result['meta']['arc_restricted_post'] ) && $result['meta']['arc_restricted_post'] === true ) {
-				return new WP_Error(
-					'rest_restricted_content',
-					__( 'This content was restricted from anonymous access.', 'anonymous-restricted-content' ),
-					array( 'status' => 401 )
-				);
-			}
-
-			if ( isset( $result[0]['id'] ) ) {
-				foreach ( $result as $k => $item ) {
-					if ( isset( $item['meta']['arc_restricted_post'] ) && $item['meta']['arc_restricted_post'] === true ) {
-						$result[ $k ] = __( 'This content was restricted from anonymous access.', 'anonymous-restricted-content' );
-					}
-				}
-			}
-		}
-
-		return $result;
 	}
 
 

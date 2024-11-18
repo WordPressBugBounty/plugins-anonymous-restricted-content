@@ -70,7 +70,7 @@ class ARC {
 		if ( defined( 'ARC_VERSION' ) ) {
 			$this->version = ARC_VERSION;
 		} else {
-			$this->version = '1.0.0';
+			$this->version = '1.6.6';
 		}
 		$this->plugin_name = ARC_PACKAGE_NAME;
 
@@ -218,7 +218,7 @@ class ARC {
 
 		$this->loader->add_filter('post_class', $plugin_public, 'add_post_class', 10, 3);
 
-		$this->loader->add_filter( 'rest_pre_echo_response', $plugin_public, 'restricted_rest_api' );
+		$this->loader->add_filter( 'rest_request_before_callbacks', $plugin_public, 'restricted_rest_api_content', 10, 3 );
 
 	}
 

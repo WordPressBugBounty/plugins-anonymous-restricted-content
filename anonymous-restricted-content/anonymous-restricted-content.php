@@ -10,7 +10,7 @@
  * Plugin Name:       Anonymous Restricted Content
  * Plugin URI:        https://wordpress.org/plugins/anonymous-restricted-content/
  * Description:       Restrict access to selected content (posts/pages/categories) for NOT LOGGED IN users.
- * Version:           1.6.5
+ * Version:           1.6.6
  * Author:            Taras Sych
  * Author URI:        https://wordpress.org/plugins/anonymous-restricted-content/
  * License:           GPL-2.0+
@@ -27,7 +27,7 @@ if ( ! defined( 'WPINC' ) ) {
 /**
  * Currently plugin version.
  */
-define( 'ARC_VERSION', '1.6.5' );
+define( 'ARC_VERSION', '1.6.6' );
 define( 'ARC_PACKAGE_NAME', 'ARC' );
 
 /**
